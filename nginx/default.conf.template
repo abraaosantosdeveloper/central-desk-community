@@ -14,6 +14,12 @@ server {
     location /api/ {
         proxy_pass ${API_UPSTREAM}/;
         proxy_http_version 1.1;
+
+        # Back-end fora do ar ou iniciando: desiste logo em vez de segurar o navegador por 60 s
+        # e responde um 503 em JSON (o front mostra "servidor indisponível" e tenta de novo).
+        # Sem proxy_intercept_errors, os erros do próprio back-end passam intactos.
+        proxy_connect_timeout 5s;
+        error_page 502 504 = @api_unavailable;
         proxy_set_header Connection "";
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
@@ -25,6 +31,13 @@ server {
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 1h;
+    }
+
+    location @api_unavailable {
+        default_type application/problem+json;
+        add_header Retry-After 5 always;
+        add_header Cache-Control "no-store" always;
+        return 503 '{"title":"Servidor indisponível","status":503,"detail":"O servidor está iniciando ou fora do ar. Tente de novo em instantes."}';
     }
 
     location /assets/ {
