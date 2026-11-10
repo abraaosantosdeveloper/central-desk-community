@@ -6,4 +6,4 @@ export const COMPANY_NAME = import.meta.env.VITE_COMPANY_NAME?.trim() || 'Empres
 export const SUPPORT_TEAM_NAME = import.meta.env.VITE_SUPPORT_TEAM_NAME?.trim() || 'TI & Suporte'
 
 /** Exemplo de e-mail para os campos. O cadastro é aberto: qualquer domínio é aceito. */
-export const EMAIL_PLACEHOLDER = 'nome@empresa.com.br'
+export const EMAIL_PLACEHOLDER = 'nome@dominio.com.br'
