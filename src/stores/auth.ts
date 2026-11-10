@@ -38,12 +38,17 @@ export function normalizeCode(code: string): string {
   return code.replace(/\D/g, '').slice(0, 6)
 }
 
+/** Quanto a conferência de sessão espera o servidor antes de liberar a tela. */
+const SESSION_CHECK_TIMEOUT_MS = 8000
+
 export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref<CurrentUser | null>(null)
   const checked = ref(false)
   const logoutReason = ref<LogoutReason>(null)
   /** E-mail à espera de um código (login em duas etapas ou confirmação do cadastro). Só em memória. */
   const pendingEmail = ref('')
+  /** A última conferência de sessão não chegou ao servidor (fora do ar, iniciando ou sem rede). */
+  const serverUnavailable = ref(false)
 
   const isAuthenticated = computed(() => currentUser.value !== null)
   const isAdmin = computed(() => currentUser.value?.roles.includes(ROLE_ADMIN) ?? false)
@@ -71,8 +76,10 @@ export const useAuthStore = defineStore('auth', () => {
   /** Confere no servidor quem está logado. Chamado ao abrir o app e ao trocar de tela. */
   async function loadSession(): Promise<void> {
     try {
-      currentUser.value = await meApi.get()
+      currentUser.value = await meApi.get(SESSION_CHECK_TIMEOUT_MS)
+      serverUnavailable.value = false
     } catch (error) {
+      serverUnavailable.value = error instanceof ApiError && (error.isNetworkError || error.status >= 500)
       if (error instanceof ApiError && error.status === 403) clear('deactivated')
       else if (error instanceof ApiError && error.status === 401) clear(currentUser.value ? 'expired' : null)
       else if (!currentUser.value) throw error
@@ -160,6 +167,7 @@ export const useAuthStore = defineStore('auth', () => {
     checked,
     logoutReason,
     pendingEmail,
+    serverUnavailable,
     isAuthenticated,
     passwordChangeRequired,
     isAdmin,

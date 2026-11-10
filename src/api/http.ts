@@ -113,6 +113,8 @@ export interface RequestOptions {
   body?: unknown
   query?: Record<string, string | number | boolean | undefined | null>
   signal?: AbortSignal
+  /** Desiste depois deste tempo (ms) e trata como "sem conexão". Sem valor, espera o quanto for. */
+  timeoutMs?: number
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
@@ -125,15 +127,19 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
 }
 
 async function send(path: string, options: RequestOptions): Promise<Response> {
+  const signals = [options.signal, options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined].filter(
+    (signal): signal is AbortSignal => signal !== undefined,
+  )
   try {
     return await fetch(buildUrl(path, options.query), {
       method: options.method ?? 'GET',
       credentials: 'same-origin',
       headers: options.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      signal: options.signal,
+      signal: signals.length > 1 ? AbortSignal.any(signals) : signals[0],
     })
   } catch (error) {
+    // Cancelado por quem chamou: repassa. Estourou o timeout (TimeoutError) ou a rede caiu: "sem conexão".
     if (error instanceof DOMException && error.name === 'AbortError') throw error
     throw new ApiError(0, 'Sem conexão', fallbackMessage(0))
   }

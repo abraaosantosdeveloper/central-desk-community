@@ -1,4 +1,4 @@
-import { http } from './http'
+import { http, request } from './http'
 import type {
   AdminUser,
   AdminUserDetail,
@@ -62,7 +62,8 @@ export const authApi = {
 }
 
 export const meApi = {
-  get: () => http.get<CurrentUser>('/users/me'),
+  /** `timeoutMs`: na abertura do app, para não deixar a tela em branco se o servidor não responder. */
+  get: (timeoutMs?: number) => request<CurrentUser>('/users/me', { timeoutMs }),
   rename: (fullName: string) => http.put<CurrentUser>('/users/me', { fullName }),
   /** `code`: exigido quando a verificação em duas etapas está ligada (POST /users/me/password/code). */
   changePassword: (currentPassword: string, newPassword: string, code?: string) =>
