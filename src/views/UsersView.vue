@@ -319,7 +319,10 @@ const columns = 'minmax(220px, 1.6fr) 150px 150px 160px 96px'
               <span role="cell" style="display: flex; align-items: center; gap: 10px; min-width: 0">
                 <UserAvatar :name="user.fullName" />
                 <button type="button" class="person" :aria-pressed="selected?.id === user.id" @click="select(user)">
-                  <span class="truncate" style="font-weight: 500">{{ user.fullName }}{{ user.id === auth.currentUser?.id ? ' (você)' : '' }}</span>
+                  <span class="person__name">
+                    <span class="truncate person__name-text">{{ user.fullName }}</span>
+                    <span v-if="user.id === auth.currentUser?.id" class="person__you">(você)</span>
+                  </span>
                   <span class="truncate xsmall muted">{{ user.email }}</span>
                 </button>
               </span>
@@ -536,7 +539,8 @@ const columns = 'minmax(220px, 1.6fr) 150px 150px 160px 96px'
 .person {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
+  flex: 1 1 0;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -546,7 +550,22 @@ const columns = 'minmax(220px, 1.6fr) 150px 150px 160px 96px'
   min-height: 44px;
   justify-content: center;
 }
-.person:hover span:first-child {
+.person__name {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  font-weight: 500;
+}
+.person__name-text {
+  flex: 0 1 auto;
+}
+.person__you {
+  flex: none;
+  color: var(--muted);
+  font-weight: 400;
+}
+.person:hover .person__name-text {
   text-decoration: underline;
 }
 .temp {
